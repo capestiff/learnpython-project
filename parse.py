@@ -3,19 +3,22 @@ import pprint
 from bs4 import BeautifulSoup
 from get_html import get_html
 
-'''
-    The function parses page with the list of resumes at url.
-    Then it creates the list of persons.
-    After that the function asdds the next information from the list to the person list:
-     - age
-     - gender
-     - url to personal resume
-
-     Input: (str) HTML text
-     Output: (list) full list of persons
-'''
-
 def fetch_person_list(hmtl_page):
+    '''
+        The function parses page with the list of resumes at url.
+        Then it creates the list of persons.
+        After that the function asdds the next information from the list to the person list:
+         - age
+         - gender
+         - url to personal resume
+         - has degree True of False
+         - city
+         - keywords
+
+         Input: (str) HTML text
+         Output: (list) full list of persons
+    '''
+
     page_soup = BeautifulSoup(hmtl_page, 'html.parser')
 
     person_list = []
@@ -50,17 +53,17 @@ def fetch_person_list(hmtl_page):
 
     return person_list
 
-'''
-    The function adds the next information from personal page to the person list:
-     - has_degree
-     - keywords
-     - city
-
-     Input: (list) list of persons without upper info
-     Output: (list) full list of persons
-'''
-
 def fetch_info_from_resume(person, resume_html):
+    '''
+        The function adds the next information from personal page to the person from fetch_person_list():
+         - has_degree
+         - keywords
+         - city
+
+         Input: (dict) person, (str) resume_html
+         Output: (dict) person
+    '''
+
     personal_page_soup = BeautifulSoup(resume_html, 'html.parser')
 
     # Check that the personal page include a highschool/university degree mark
@@ -84,14 +87,13 @@ def fetch_info_from_resume(person, resume_html):
 
     return person
 
-'''
-    The function fetch resume list from hh.ru by keyword
-
-     Input: (str) keyword
-     Output: (list) full list of persons at hh.ru
-'''
-
 def fetch_resume_list_by_keyword(keyword):
+    '''
+        The function fetch resume list from hh.ru by keyword
+
+         Input: (str) keyword
+         Output: (list) full list of persons at hh.ru
+    '''
 
     full_person_list = []
 
