@@ -11,20 +11,16 @@ from get_html import get_html
      - gender
      - url to personal resume
 
-     Input: (str) url
+     Input: (str) HTML text
      Output: (list) full list of persons
 '''
 
-def fetch_person_list(url):
-    page = get_html(url)
-    page_soup = BeautifulSoup(page, 'html.parser')
+def fetch_person_list(hmtl_page):
+    page_soup = BeautifulSoup(hmtl_page, 'html.parser')
 
     person_list = []
-    person = {}
-    person_row_list = page_soup.tr(class_='output__item')
 
-    
-    for row in person_row_list:
+    for row in page_soup.tr(class_='output__item'):
 
         # Fetch age, gender and url from output listing page
         tag_with_age = row.find('span', class_='output__age')
@@ -32,11 +28,9 @@ def fetch_person_list(url):
         tag_with_url = row.find('a', itemprop='jobTitle')
 
         # strip years number off ' years'
-        age = tag_with_age.text.strip()[0:2]
+        age = tag_with_age.text.strip().split('\xa0')[0]
         # check that the age is specified
-        if age != '':
-            age = int(age)
-        else: age = 0
+        age = int(age) if age else None
         gender = tag_with_gender.attrs['content']
         url = 'https://hh.ru{}'.format(tag_with_url.attrs['href'])
         title = tag_with_url.text
@@ -51,7 +45,8 @@ def fetch_person_list(url):
 
         person_list.append(person)
 
-    person_list = fetch_info_from_resume(person_list)
+    for person in person_list:
+        fetch_info_from_resume(person, get_html(person['url']))
 
     return person_list
 
@@ -65,31 +60,29 @@ def fetch_person_list(url):
      Output: (list) full list of persons
 '''
 
-def fetch_info_from_resume(person_list):
-    for person in person_list:
-        personal_page = get_html(person['url'])
-        personal_page_soup = BeautifulSoup(personal_page, 'html.parser')
+def fetch_info_from_resume(person, resume_html):
+    personal_page_soup = BeautifulSoup(resume_html, 'html.parser')
 
-        # Check that the personal page include a highschool/university degree mark
-        personal_page_degree_mark = personal_page_soup.find_all(string='Высшее образование')
-        # Add the degree mark to person parameter
-        if personal_page_degree_mark:
-            person['has_degree'] = True
+    # Check that the personal page include a highschool/university degree mark
+    personal_page_degree_mark = personal_page_soup.find_all(string='Высшее образование')
+    # Add the degree mark to person parameter
+    if personal_page_degree_mark:
+        person['has_degree'] = True
 
-        # Fetch the list tags with keywords
-        personal_page_keywords_tags = personal_page_soup.find_all('span', class_='bloko-tag__section bloko-tag__section_text')
-        personal_page_keywords_list = []
-        # Add keywords to the list
-        for tag in personal_page_keywords_tags:
-            personal_page_keywords_list.append(tag.text)
-        person['keywords'] = personal_page_keywords_list
+    # Fetch the list tags with keywords
+    personal_page_keywords_tags = personal_page_soup.find_all('span', class_='bloko-tag__section bloko-tag__section_text')
+    personal_page_keywords_list = []
+    # Add keywords to the list
+    for tag in personal_page_keywords_tags:
+        personal_page_keywords_list.append(tag.text)
+    person['keywords'] = personal_page_keywords_list
 
-        # Fetch the city name
-        personal_page_city_tag = personal_page_soup.find('span', itemprop='addressLocality')
-        if personal_page_city_tag:
-            person['city'] = personal_page_city_tag.text
+    # Fetch the city name
+    personal_page_city_tag = personal_page_soup.find('span', itemprop='addressLocality')
+    if personal_page_city_tag:
+        person['city'] = personal_page_city_tag.text
 
-    return person_list
+    return person
 
 '''
     The function fetch resume list from hh.ru by keyword
@@ -125,7 +118,9 @@ def fetch_resume_list_by_keyword(keyword):
 
         page_url = 'https://hh.ru/search/resume?{}'.format(arg_string)
 
-        page_person_list = fetch_person_list(page_url)
+        page_html_data = get_html(page_url)
+
+        page_person_list = fetch_person_list(page_html_data)
 
         # Add list of persons for every output results page
         full_person_list += page_person_list
