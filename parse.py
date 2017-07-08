@@ -113,14 +113,7 @@ def fetch_resume_list_by_keyword(keyword):
             'page': page_number
         }
 
-        arg_string = ''
-
-        for key, value in url_args.items():
-            arg_string += '{}={}&'.format(key, value)
-
-        page_url = 'https://hh.ru/search/resume?{}'.format(arg_string)
-
-        page_html_data = get_html(page_url)
+        page_html_data = get_html('https://hh.ru/search/resume?{}', url_args)
 
         page_person_list = fetch_person_list(page_html_data)
 
