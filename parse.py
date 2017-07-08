@@ -3,7 +3,7 @@ import pprint
 from bs4 import BeautifulSoup
 from get_html import get_html
 
-def fetch_person_list(hmtl_page):
+def fetch_person_list(html_page):
     '''
         The function parses page with the list of resumes at url.
         Then it creates the list of persons.
@@ -19,7 +19,7 @@ def fetch_person_list(hmtl_page):
          Output: (list) full list of persons
     '''
 
-    page_soup = BeautifulSoup(hmtl_page, 'html.parser')
+    page_soup = BeautifulSoup(html_page, 'html.parser')
 
     person_list = []
 
@@ -48,14 +48,11 @@ def fetch_person_list(hmtl_page):
 
         person_list.append(person)
 
-    for person in person_list:
-        fetch_info_from_resume(person, get_html(person['url']))
-
     return person_list
 
 def fetch_info_from_resume(person, resume_html):
     '''
-        The function adds the next information from personal page to the person from fetch_person_list():
+        The function adds the next information from personal page to the person:
          - has_degree
          - keywords
          - city
@@ -112,14 +109,18 @@ def fetch_resume_list_by_keyword(keyword):
             'clusters': 'true',
             'page': page_number
         }
+        page_url = 'https://hh.ru/search/resume?'
+        page_html_data = get_html(page_url, url_args)
 
-        page_html_data = get_html('https://hh.ru/search/resume?{}', url_args)
+        if page_html_data:
+            page_person_list = fetch_person_list(page_html_data)
+            # Add list of persons for every output results page
+            full_person_list += page_person_list
+            page_number += 1
+        else: print('Something goes wrong.')
 
-        page_person_list = fetch_person_list(page_html_data)
-
-        # Add list of persons for every output results page
-        full_person_list += page_person_list
-        page_number += 1
+    for person in full_person_list:
+      fetch_info_from_resume(person, get_html(person['url']))
 
     return full_person_list
 
