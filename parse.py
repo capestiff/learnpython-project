@@ -117,7 +117,6 @@ def fetch_resume_list_by_keyword(keyword):
             # Add list of persons for every output results page
             full_person_list += page_person_list
             page_number += 1
-        else: print('Something goes wrong.')
 
     for person in full_person_list:
       fetch_info_from_resume(person, get_html(person['url']))
