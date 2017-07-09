@@ -3,25 +3,23 @@ import pprint
 from bs4 import BeautifulSoup
 from get_html import get_html
 
-def fetch_person_list(html_page):
-    '''
-        The function parses page with the list of resumes at url.
-        Then it creates the list of persons.
-        After that the function asdds the next information from the list to the person list:
+
+def fetch_page_resume_list(html_page):
+    """
+        The function parses resumes rows on each page of output listing.
+        Then it creates the list of resumes.
+        After that the function asdds the next information from the list to the resume list:
          - age
          - gender
          - url to personal resume
-         - has degree True of False
-         - city
-         - keywords
 
          Input: (str) HTML text
-         Output: (list) full list of persons
-    '''
+         Output: (list) list of resumes
+    """
 
     page_soup = BeautifulSoup(html_page, 'html.parser')
 
-    person_list = []
+    resume_list = []
 
     for row in page_soup.tr(class_='output__item'):
 
@@ -38,7 +36,7 @@ def fetch_person_list(html_page):
         url = 'https://hh.ru{}'.format(tag_with_url.attrs['href'])
         title = tag_with_url.text
 
-        person = {'gender': gender,
+        resume = {'gender': gender,
                   'url': url,
                   'title': title,
                   'age': age,
@@ -46,53 +44,55 @@ def fetch_person_list(html_page):
                   'city': '',
                   'keywords': []}
 
-        person_list.append(person)
+        resume_list.append(resume)
 
-    return person_list
+    return resume_list
 
-def fetch_info_from_resume(person, resume_html):
-    '''
-        The function adds the next information from personal page to the person:
+
+def fetch_info_from_resume(resume, resume_html):
+    """
+        The function adds the next information from personal resume page to the resume:
          - has_degree
          - keywords
          - city
 
-         Input: (dict) person, (str) resume_html
-         Output: (dict) person
-    '''
+         Input: (dict) resume, (str) resume_html
+         Output: (dict) resume
+    """
 
-    personal_page_soup = BeautifulSoup(resume_html, 'html.parser')
+    resume_page_soup = BeautifulSoup(resume_html, 'html.parser')
 
-    # Check that the personal page include a highschool/university degree mark
-    personal_page_degree_mark = personal_page_soup.find_all(string='Высшее образование')
-    # Add the degree mark to person parameter
-    if personal_page_degree_mark:
-        person['has_degree'] = True
+    # Check that the resume page include a highschool/university degree mark
+    resume_page_degree_mark = resume_page_soup.find_all(string='Высшее образование')
+    # Add the degree mark to resume parameter
+    if resume_page_degree_mark:
+        resume['has_degree'] = True
 
     # Fetch the list tags with keywords
-    personal_page_keywords_tags = personal_page_soup.find_all('span', class_='bloko-tag__section bloko-tag__section_text')
-    personal_page_keywords_list = []
+    resume_page_keywords_tags = resume_page_soup.find_all('span', class_='bloko-tag__section bloko-tag__section_text')
+    resume_page_keywords_list = []
     # Add keywords to the list
-    for tag in personal_page_keywords_tags:
-        personal_page_keywords_list.append(tag.text)
-    person['keywords'] = personal_page_keywords_list
+    for tag in resume_page_keywords_tags:
+        resume_page_keywords_list.append(tag.text)
+    resume['keywords'] = resume_page_keywords_list
 
     # Fetch the city name
-    personal_page_city_tag = personal_page_soup.find('span', itemprop='addressLocality')
-    if personal_page_city_tag:
-        person['city'] = personal_page_city_tag.text
+    resume_page_city_tag = resume_page_soup.find('span', itemprop='addressLocality')
+    if resume_page_city_tag:
+        resume['city'] = resume_page_city_tag.text
 
-    return person
+    return resume
+
 
 def fetch_resume_list_by_keyword(keyword):
-    '''
+    """
         The function fetch resume list from hh.ru by keyword
 
          Input: (str) keyword
-         Output: (list) full list of persons at hh.ru
-    '''
+         Output: (list) full list of resumes at hh.ru
+    """
 
-    full_person_list = []
+    full_resume_list = []
 
     # HH.ru limits page number value to 50 maximum
     for page_number in range(0, 1):
@@ -113,15 +113,16 @@ def fetch_resume_list_by_keyword(keyword):
         page_html_data = get_html(page_url, url_args)
 
         if page_html_data:
-            page_person_list = fetch_person_list(page_html_data)
-            # Add list of persons for every output results page
-            full_person_list += page_person_list
+            page_resume_list = fetch_page_resume_list(page_html_data)
+            # Add list of resumes for every output results page
+            full_resume_list += page_resume_list
             page_number += 1
 
-    for person in full_person_list:
-      fetch_info_from_resume(person, get_html(person['url']))
+    for resume in full_resume_list:
+        fetch_info_from_resume(resume, get_html(resume['url']))
 
-    return full_person_list
+    return full_resume_list
+
 
 if __name__ == '__main__':
     pp = pprint.PrettyPrinter(indent=4)
